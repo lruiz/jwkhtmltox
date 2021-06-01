@@ -29,7 +29,8 @@ import java.nio.ByteBuffer;
 public interface WebKitHtmlToPdfLibrary extends Library {
 	public static final String JNA_LIBRARY_NAME = "wkhtmltox";
 	public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(WebKitHtmlToPdfLibrary.JNA_LIBRARY_NAME);
-	public static final WebKitHtmlToPdfLibrary INSTANCE = (WebKitHtmlToPdfLibrary)Native.loadLibrary(WebKitHtmlToPdfLibrary.JNA_LIBRARY_NAME, WebKitHtmlToPdfLibrary.class);
+	public static final WebKitHtmlToPdfLibrary INSTANCE = Native.load(WebKitHtmlToPdfLibrary.JNA_LIBRARY_NAME, WebKitHtmlToPdfLibrary.class);
+
 	/** <i>native declaration : src/main/c/wkhtmltox/pdf.h:6</i> */
 	public interface wkhtmltopdf_str_callback extends Callback {
 		void apply(Pointer converter, String str);
@@ -314,7 +315,7 @@ public interface WebKitHtmlToPdfLibrary extends Library {
 	 * Original signature : <code>char* wkhtmltopdf_phase_description(wkhtmltopdf_converter*, int)</code><br>
 	 * <i>native declaration : src/main/c/wkhtmltox/pdf.h:59</i>
 	 */
-	Pointer wkhtmltopdf_phase_description(PointerByReference converter, int phase);
+	String wkhtmltopdf_phase_description(PointerByReference converter, int phase);
 	/**
 	 * Original signature : <code>char* wkhtmltopdf_progress_string(wkhtmltopdf_converter*)</code><br>
 	 * <i>native declaration : src/main/c/wkhtmltox/pdf.h:61</i><br>

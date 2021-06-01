@@ -26,6 +26,10 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import static java.lang.String.valueOf;
 
 public class ImageBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageBuilder.class);
@@ -35,6 +39,7 @@ public class ImageBuilder {
     private Integer width;
     private Integer height;
     private Charset encoding = StandardCharsets.UTF_8;
+    private Double quality = 0.94;
 
     public ImageBuilder fromInput(InputStream input){
         this.input = input;
@@ -57,44 +62,70 @@ public class ImageBuilder {
         return this;
     }
 
+    public ImageBuilder withQuality(double quality) {
+        this.quality = quality;
+        return this;
+    }
+
     public void build() {
-        WebKitHtmlToImageLibrary library = WebKitHtmlToImageLibrary.INSTANCE;
-        library.wkhtmltoimage_init(0);
+        Future f = Engine.getInstance().doWork(() -> {
+            LOGGER.debug("working");
+            WebKitHtmlToImageLibrary library = WebKitHtmlToImageLibrary.INSTANCE;
+            library.wkhtmltoimage_init(0);
 
-        PointerByReference globals = library.wkhtmltoimage_create_global_settings();
-        library.wkhtmltoimage_set_global_setting(globals, "fmt", format.name().toLowerCase(Locale.ROOT));
-        if(width != null) {
-            library.wkhtmltoimage_set_global_setting(globals, "screenWidth", width.toString());
-            library.wkhtmltoimage_set_global_setting(globals, "smartWidth", "false");
-        }
-        if(height != null) {
-            library.wkhtmltoimage_set_global_setting(globals, "screenHeight", height.toString());
-            library.wkhtmltoimage_set_global_setting(globals, "smartWidth", "false");
-        }
-
-        library.wkhtmltoimage_set_global_setting(globals, "web.defaultEncoding", encoding.name().toLowerCase());
-        PointerByReference converter = null;
-        try {
-            converter = library.wkhtmltoimage_create_converter(globals, readData(input));
-        } catch(IOException e) {
-            throw new IllegalStateException(e);
-        }
-
-        library.wkhtmltoimage_set_warning_callback(converter, (c, s) -> LOGGER.warn(s));
-        library.wkhtmltoimage_set_error_callback(converter, (c,s) -> LOGGER.error(s));
-
-        try {
-            if (library.wkhtmltoimage_convert(converter) == 1) {
-                PointerByReference out = new PointerByReference();
-                NativeLong size = library.wkhtmltoimage_get_output(converter, out);
-                byte[] rawbytes = new byte[size.intValue()];
-                out.getValue().read(0, rawbytes, 0, rawbytes.length);
-                output.write(rawbytes);
+            PointerByReference globals = library.wkhtmltoimage_create_global_settings();
+            library.wkhtmltoimage_set_global_setting(globals, "fmt", format.name().toLowerCase(Locale.ROOT));
+            if(width != null) {
+                library.wkhtmltoimage_set_global_setting(globals, "screenWidth", width.toString());
+                library.wkhtmltoimage_set_global_setting(globals, "smartWidth", "false");
             }
-        } catch(Exception e) {
+            if(height != null) {
+                library.wkhtmltoimage_set_global_setting(globals, "screenHeight", height.toString());
+                library.wkhtmltoimage_set_global_setting(globals, "smartWidth", "false");
+            }
+
+            if(quality != null) {
+                library.wkhtmltoimage_set_global_setting(globals, "quality", valueOf((int)(quality * 100)));
+            }
+
+            library.wkhtmltoimage_set_global_setting(globals, "web.defaultEncoding", encoding.name().toLowerCase());
+            final PointerByReference converter;
+            try {
+                converter = library.wkhtmltoimage_create_converter(globals, readData(input));
+            } catch(IOException e) {
+                throw new IllegalStateException(e);
+            }
+
+            library.wkhtmltoimage_set_warning_callback(converter, (c, s) -> LOGGER.warn(s));
+            library.wkhtmltoimage_set_error_callback(converter, (c,s) -> LOGGER.error(s));
+            library.wkhtmltoimage_set_progress_changed_callback(converter, (c, phaseProgress) -> {
+                int current = library.wkhtmltoimage_current_phase(converter);
+                int total = library.wkhtmltoimage_phase_count(converter);
+                String description = library.wkhtmltoimage_phase_description(converter, current);
+                LOGGER.debug("{}/{}, phase {}", current, total, description);
+            });
+            try {
+                if (library.wkhtmltoimage_convert(converter) == 1) {
+                    PointerByReference out = new PointerByReference();
+                    NativeLong size = library.wkhtmltoimage_get_output(converter, out);
+                    byte[] rawbytes = new byte[size.intValue()];
+                    out.getValue().read(0, rawbytes, 0, rawbytes.length);
+                    output.write(rawbytes);
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            } finally {
+                library.wkhtmltoimage_destroy_converter(converter);
+//                library.wkhtmltoimage_deinit();
+            }
+            LOGGER.debug("work finished");
+        });
+        try {
+            f.get();
+        } catch(InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            library.wkhtmltoimage_destroy_converter(converter);
+        } catch(ExecutionException e) {
+            e.printStackTrace();
         }
     }
 

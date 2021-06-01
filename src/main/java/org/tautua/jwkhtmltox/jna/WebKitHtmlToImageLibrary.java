@@ -30,7 +30,8 @@ import java.nio.ByteBuffer;
 public interface WebKitHtmlToImageLibrary extends Library {
 	public static final String JNA_LIBRARY_NAME = "wkhtmltox";
 	public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(WebKitHtmlToImageLibrary.JNA_LIBRARY_NAME);
-	public static final WebKitHtmlToImageLibrary INSTANCE = (WebKitHtmlToImageLibrary)Native.loadLibrary(WebKitHtmlToImageLibrary.JNA_LIBRARY_NAME, WebKitHtmlToImageLibrary.class);
+	public static final WebKitHtmlToImageLibrary INSTANCE = Native.load(WebKitHtmlToImageLibrary.JNA_LIBRARY_NAME, WebKitHtmlToImageLibrary.class);
+
 	/** <i>native declaration : src/main/c/wkhtmltox/image.h:4</i> */
 	public interface wkhtmltoimage_str_callback extends Callback {
 		void apply(Pointer converter, String str);
@@ -240,7 +241,7 @@ public interface WebKitHtmlToImageLibrary extends Library {
 	 * Original signature : <code>char* wkhtmltoimage_phase_description(wkhtmltoimage_converter*, int)</code><br>
 	 * <i>native declaration : src/main/c/wkhtmltox/image.h:45</i>
 	 */
-	Pointer wkhtmltoimage_phase_description(PointerByReference converter, int phase);
+	String wkhtmltoimage_phase_description(PointerByReference converter, int phase);
 	/**
 	 * Original signature : <code>char* wkhtmltoimage_progress_string(wkhtmltoimage_converter*)</code><br>
 	 * <i>native declaration : src/main/c/wkhtmltox/image.h:47</i><br>

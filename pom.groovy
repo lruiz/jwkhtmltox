@@ -29,6 +29,9 @@ project {
         dependency 'net.java.dev.jna:jna:5.8.0'
         dependency 'org.slf4j:slf4j-api:1.7.30'
 
+        dependency ('ch.qos.logback:logback-classic:1.2.3') {
+            scope 'test'
+        }
         dependency ('org.junit.jupiter:junit-jupiter-engine:5.6.2') {
             scope 'test'
         }
