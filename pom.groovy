@@ -38,13 +38,15 @@ project {
     }
     build {
         plugins {
-//            plugin('com.nativelibs4java:maven-jnaerator-plugin:0.12') {
-//                executions {
-//                    execution {
-//                        goals 'generate'
-//                    }
-//                }
-//            }
+            /*
+            plugin('com.nativelibs4java:maven-jnaerator-plugin:0.12') {
+                executions {
+                    execution {
+                        goals 'generate'
+                    }
+                }
+            }
+            */
         }
     }
 }

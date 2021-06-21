@@ -33,6 +33,8 @@ import static java.lang.String.valueOf;
 
 public class ImageBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageBuilder.class);
+    private WebKitHtmlToImageLibrary library = WebKitHtmlToImageLibrary.INSTANCE;
+
     private InputStream input;
     private OutputStream output;
     private ImageFormat format = ImageFormat.JPG;
@@ -70,9 +72,6 @@ public class ImageBuilder {
     public void build() {
         Future f = Engine.getInstance().doWork(() -> {
             LOGGER.debug("working");
-            WebKitHtmlToImageLibrary library = WebKitHtmlToImageLibrary.INSTANCE;
-            library.wkhtmltoimage_init(0);
-
             PointerByReference globals = library.wkhtmltoimage_create_global_settings();
             library.wkhtmltoimage_set_global_setting(globals, "fmt", format.name().toLowerCase(Locale.ROOT));
             if(width != null) {
@@ -113,10 +112,9 @@ public class ImageBuilder {
                     output.write(rawbytes);
                 }
             } catch(Exception e) {
-                e.printStackTrace();
+                LOGGER.error("conversion error", e);
             } finally {
                 library.wkhtmltoimage_destroy_converter(converter);
-//                library.wkhtmltoimage_deinit();
             }
             LOGGER.debug("work finished");
         });
