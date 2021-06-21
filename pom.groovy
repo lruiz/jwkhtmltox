@@ -21,7 +21,7 @@ project {
 
     groupId 'org.tautua.jwkhtmltox'
     artifactId 'jwkhtmltox'
-    version '1.0-SNAPSHOT'
+    version '0.5.0'
     properties {
         'java.version' '1.8'
     }
